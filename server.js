@@ -85,6 +85,17 @@ server.put('/api/projects/:id', (req, res) => {
     }
 })
 
+server.get('/api/projects/:id/actions', (req, res) => {
+    const { id } = req.params
+    projects.getProjectActions(id)
+        .then(projectActions => {
+            res.status(200).json(projectActions)
+        })
+        .catch( error => {
+            res.status(500).json({ error: `Unable to get actions for project with id ${id}` })
+        })
+})
+
 /*************************
 **** Action endpoints ****
 **************************/
