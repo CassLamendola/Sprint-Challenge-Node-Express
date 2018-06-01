@@ -8,6 +8,9 @@ server.use(express.json())
 const projects = require("./data/helpers/projectModel.js")
 const actions = require("./data/helpers/actionModel.js")
 
+/**************************
+**** Project endpoints ****
+***************************/
 server.get('/api/projects', (req, res) => {
     projects.get()
         .then( projectsList => {
@@ -25,7 +28,7 @@ server.get('/api/projects/:id', (req, res) => {
             res.status(200).json(project)
         })
         .catch( error => {
-            res.status(404).json({ userError: `There is no project with id ${id}` })
+            res.status(404).json({ userError: `Unable to get project with id ${id}` })
         })
 })
 
@@ -78,6 +81,114 @@ server.put('/api/projects/:id', (req, res) => {
             })
             .catch( error => {
                 res.status(500).json({ error: `Unable to update project with id ${id}` })
+            })
+    }
+})
+
+/*************************
+**** Action endpoints ****
+**************************/
+server.get('/api/actions', (req, res) => {
+    actions.get()
+        .then( actionsList => {
+            res.status(200).json(actionsList)
+        })
+        .catch( error => {
+            res.status(500).json({ error: "Unable to get actions" })
+        })
+})
+
+server.get('/api/actions/:id', (req, res) => {
+    const { id } = req.params
+    actions.get(id)
+        .then( action => {
+            res.status(200).json(action)
+        })
+        .catch( error => {
+            res.status(404).json({ error: `Unable to get action with id ${id}` })
+        })
+})
+
+server.post('/api/projects/:id/actions', (req, res) => {
+    const { id } = req.params
+    const { description, notes, completed } = req.body
+    console.log(notes, completed)
+    console.log(id)
+    if (!description) {
+        res.status(400).json({ userError: "Please include a description" })
+    } else {
+        let result = null
+        if (notes !== undefined) {
+            result = actions.insert({
+                project_id: id,
+                description: description,
+                notes: notes,
+                completed: completed
+            })
+         } else {
+            result = actions.insert({
+                project_id: id,
+                description: description,
+                notes: '',
+                completed: completed
+            })
+        }
+            result.then( action => {
+                res.status(201).json(action)
+            })
+            .catch( error => {
+                res.status(500).json({ error: `Unable to create action for project with id ${id}` })
+            })
+    }
+})
+
+server.delete('/api/actions/:id', (req, res) => {
+    const { id } = req.params
+    actions.remove(id)
+        .then( response => {
+            if (response) {
+                res.status(200)
+                actions.get()
+                    .then( actionsList => {
+                        res.status(200).json(actionsList)
+                    })
+                    .catch( error => {
+                        res.status(500).json({ error: "Unable to get actions" })
+                    })
+            } else {
+                res.status(404).json({ userError: `Unable to delete action with id ${id}` })
+            }
+        })
+        .catch ( error => {
+            res.status(500).json({ error: `Unable to delete action with id ${id}` })
+        })
+})
+
+server.put('/api/actions/:id', (req, res) => {
+    const { id } = req.params
+    const { description, notes, completed } = req.body
+    if (!description) {
+        res.status(400).json({ userError: "Please include a description" })
+    } else {
+        let result = null
+        if (notes) {
+            result = actions.update( id, {
+                description: description,
+                notes: notes,
+                completed: completed
+            })
+         } else {
+            result = actions.update(id, {
+                description: description,
+                notes: '',
+                completed: completed
+            })
+        }
+            result.then( action => {
+                res.status(201).json(action)
+            })
+            .catch( error => {
+                res.status(500).json({ error: `Unable to update action with id ${id}` })
             })
     }
 })
